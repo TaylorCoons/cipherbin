@@ -6,6 +6,7 @@
 #include "Cipher.h"
 #include "CaeserCipher.h"
 #include "MonoalphabeticCipher.h"
+#include "PlayfairCipher.h"
 
 // Validate list options
 bool ValidateList();
@@ -97,7 +98,7 @@ int main(int argc, char** argv) {
         }
         std::string cipherText;
         cipherText = cipher->Encrypt(encryptOpts["key"].result, encryptOpts["plaintext"].result);
-        std::cout << cipherText << std::endl;
+        std::cout << cipherText;
         if (cipher != nullptr) {
             delete cipher;
             cipher = nullptr;
@@ -156,5 +157,7 @@ Cipher* InstantiateCipher(const std::string& cipher) {
         return reinterpret_cast<Cipher*>(new CeaserCipher);
     } else if (cipher == "Monoalphabetic") {
         return reinterpret_cast<Cipher*>(new MonoalphabeticCipher);
+    } else if (cipher == "Playfair") {
+        return reinterpret_cast<Cipher*>(new PlayfairCipher);
     }
 }
