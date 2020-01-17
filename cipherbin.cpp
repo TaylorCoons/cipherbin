@@ -2,17 +2,21 @@
 #include <string>
 #include "CLIParser/CLIParser.h"
 
+// Cipher includes
+#include "Cipher.h"
+#include "CaeserCipher.h"
+
 // Validate list options
 bool ValidateList();
 
-// Validate encrypt options
-bool ValidateEncryptOpts(CLIParser::OPTIONS& options, const std::string* cipherList, unsigned int numCiphers);
-
-// Validate decrypt options
-bool ValidateDecryptOpts(CLIParser::OPTIONS& options, const std::string* cipherList, unsigned int numCiphers);
+// Validate cipher option
+bool ValidateCipherOpt(CLIParser::OPTIONS& options, const std::string* cipherList, unsigned int numCiphers);
 
 // List supported ciphers
 void ListCiphers(const std::string* cipherList, unsigned int numCiphers);
+
+// Instantiate polymorphic cipher based on subclass
+Cipher* InstantiateCipher(const std::string& cipher);
 
 int main(int argc, char** argv) {
     // Instantiate argument parser
@@ -73,22 +77,46 @@ int main(int argc, char** argv) {
     std::string subParser = argparse.Parse(argc, argv);
     
     // Check if there was an error parsing
-    if (!argparse.ParseError()) {
-        // Branch on subParser
-        if (subParser == "list") {
-            if (ValidateList()) {
-                ListCiphers(cipherList, numCiphers);
-            }
-        } else if (subParser == "encrypt") {
-            if (ValidateEncryptOpts(encryptOpts, cipherList, numCiphers)) {
-
-            }
-        } else if (subParser == "decrypt") {
-            if (ValidateDecryptOpts(decryptOpts, cipherList, numCiphers)) {
-
-            } 
+    if (argparse.ParseError()) {
+        return 1;
+    }
+        
+    // Branch on subParser
+    if (subParser == "list") {
+        if (ValidateList()) {
+            ListCiphers(cipherList, numCiphers);
         }
-    }    
+    } else if (subParser == "encrypt") {
+        if (!ValidateCipherOpt(encryptOpts, cipherList, numCiphers)) {
+            return 1; 
+        }
+        Cipher* cipher = InstantiateCipher(encryptOpts["cipher"].result);
+        if (!cipher->ValidateKey(encryptOpts["key"].result, encryptOpts["plaintext"].result)) {
+            return 1;
+        }
+        std::string cipherText;
+        cipherText = cipher->Encrypt(encryptOpts["key"].result, encryptOpts["plaintext"].result);
+        std::cout << cipherText << std::endl;
+        if (cipher != nullptr) {
+            delete cipher;
+            cipher = nullptr;
+        }
+    } else if (subParser == "decrypt") {
+        if (!ValidateCipherOpt(decryptOpts, cipherList, numCiphers)) {
+            return 1;
+        }
+        Cipher* cipher = InstantiateCipher(decryptOpts["cipher"].result);
+        if (!cipher->ValidateKey(decryptOpts["key"].result, decryptOpts["ciphertext"].result)) {
+            return 1;
+        }
+        std::string plainText;
+        plainText = cipher->Decrypt(decryptOpts["key"].result, decryptOpts["ciphertext"].result);
+        std::cout << plainText << std::endl; 
+        if (cipher != nullptr) {
+            delete cipher;
+            cipher = nullptr;
+        }
+    }
 
     return 0;
 }
@@ -99,7 +127,7 @@ bool ValidateList() {
 }
 
 // Validate encrypt options
-bool ValidateEncryptOpts(CLIParser::OPTIONS& options, const std::string* cipherList, unsigned int numCiphers) {
+bool ValidateCipherOpt(CLIParser::OPTIONS& options, const std::string* cipherList, unsigned int numCiphers) {
     for (unsigned int i = 0; i < numCiphers; i++) {
         if (cipherList[i] == options["cipher"].result) {
             return true;
@@ -107,11 +135,6 @@ bool ValidateEncryptOpts(CLIParser::OPTIONS& options, const std::string* cipherL
     }
     std::cout << "Cipher must be in supported cipher list" << std::endl;
     return false;
-}
-
-// Validate decrypt options
-bool ValidateDecryptOpts(CLIParser::OPTIONS& options, const std::string* cipherList, unsigned int numCiphers) {
-    return true;
 }
 
 // List supported ciphers
@@ -124,4 +147,12 @@ void ListCiphers(const std::string* cipherList, unsigned int numCiphers) {
         }
     }
     std::cout << std::endl;
+}
+
+// Instantiate polymorphic cipher based on subclass
+Cipher* InstantiateCipher(const std::string& cipher) {
+    if (cipher == "Caeser") {
+        CeaserCipher* ceaserCipher = new CeaserCipher;
+        return reinterpret_cast<Cipher*>(ceaserCipher);
+    }
 }
