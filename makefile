@@ -1,3 +1,5 @@
-cipherbin: cipherbin.cpp CLIParser/CLIParser.h CLIParser/CLIParser.cpp Cipher.h CaeserCipher.h MonoalphabeticCipher.h
-	g++ -g -o cipherbin CLIParser/CLIParser.h CLIParser/CLIParser.cpp Cipher.h CaeserCipher.h MonoalphabeticCipher.h cipherbin.cpp
+HPP = Cipher.h CLIParser/CLIParser.h $(wildcard *Cipher.h)
+CPP = CLIParser/CLIParser.cpp
+cipherbin: $(CPP) $(HPP) cipherbin.cpp
+	g++ -g -o cipherbin $(CPP) $(HPP) cipherbin.cpp
 
