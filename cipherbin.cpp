@@ -5,6 +5,7 @@
 // Cipher includes
 #include "Cipher.h"
 #include "CaeserCipher.h"
+#include "MonoalphabeticCipher.h"
 
 // Validate list options
 bool ValidateList();
@@ -152,7 +153,8 @@ void ListCiphers(const std::string* cipherList, unsigned int numCiphers) {
 // Instantiate polymorphic cipher based on subclass
 Cipher* InstantiateCipher(const std::string& cipher) {
     if (cipher == "Caeser") {
-        CeaserCipher* ceaserCipher = new CeaserCipher;
-        return reinterpret_cast<Cipher*>(ceaserCipher);
+        return reinterpret_cast<Cipher*>(new CeaserCipher);
+    } else if (cipher == "Monoalphabetic") {
+        return reinterpret_cast<Cipher*>(new MonoalphabeticCipher);
     }
 }
