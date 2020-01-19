@@ -13,27 +13,37 @@ class MonoalphabeticCipher : Cipher {
     
     /* Functions */
     private:
+    char TransformCharacter(const std::string& key, const char& c) {
+        uint8_t pos;
+        for (pos = 0; pos < key.size(); pos++) {
+            if (tolower(key[pos]) == tolower(c)) {
+                break;
+            }
+        }
+        return 'a' + pos;
+    }
+    std::string Transform(const std::string& key, const std::string& text, bool forward) {
+        std::string transformedText;
+        for (unsigned int i = 0; i < text.size(); i++) {
+            if (forward) {
+                transformedText.push_back(TransformCharacter(key, text[i]));
+            } else {
+                transformedText.push_back(key[static_cast<uint8_t>(tolower(text[i])-'a')]);
+            }
+        }
+        return transformedText;
+    }
 
     public:
-    virtual std::string Encrypt(const std::string& key, const std::string& plainText) {
-        std::string cipherText;    
-        for (unsigned int i = 0; i < plainText.size(); i++) {
-            uint8_t pOrd = static_cast<uint8_t>(plainText[i] - 'a');
-            cipherText.push_back(key[pOrd]);
-        }
-        return cipherText;
+    std::string Encrypt(const std::string& key, const std::string& plainText) {
+        return Transform(key, plainText, true);
     }
 
-    virtual std::string Decrypt(const std::string& key, const std::string& cipherText) {
-        std::string plainText;
-        for (unsigned int i = 0; i < cipherText.size(); i++) {
-            uint8_t cOrd = static_cast<uint8_t>(cipherText[i] - 'a');
-            plainText.push_back(key[cOrd]);
-        }
-        return plainText;
+    std::string Decrypt(const std::string& key, const std::string& cipherText) {
+        return Transform(key, cipherText, false);
     }
 
-    virtual bool ValidateKey(const std::string& key, const std::string& text) {
+    bool ValidateKey(const std::string& key, const std::string& text) {
         if (key.size() != 26) {
             std::cout << "Key length must be 26" << std::endl;
             return false;
