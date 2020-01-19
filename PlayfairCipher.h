@@ -22,57 +22,66 @@ class PlayfairCipher : Cipher {
     std::string FormatKey(const std::string& key) {
         std::string formatedKey;
         formatedKey.clear();
-        formatedKey.push_back(key[0]);
-        for (int i = 1; i < key.size(); i++) {
+        char usedChars[25] = {};
+        unsigned int numUsed = 0;
+        for (int i = 0; i < key.size(); i++) {
             if (key[i] == 'q') {
                 continue;   
             }
-            if (key[i] == key[i - 1]) {
+            if (i == 0) {
+                formatedKey.push_back(key[i]);
+                continue;
+            }
+            bool prevUsed = false;
+            for (unsigned int j = 0; j < numUsed; j++) {
+                if (key[i] == usedChars[j]) {
+                    prevUsed = true;
+                    break;
+                }
+            }
+            if (prevUsed) {
                 continue;
             } else {
                 formatedKey.push_back(key[i]);
+                usedChars[numUsed] = key[i];
+                numUsed++;
             }
         }
-        std::cout << "Formated Key: " << formatedKey << std::endl;
         return formatedKey;
     }
 
-    std::string FormatPlainText(const std::string& plainText) {
+    std::string FormatText(const std::string& text) {
         std::string formatedText;
-        for (int i = 0; i < plainText.size(); i += 2) {
-            formatedText.push_back(plainText[i]);
-            if ((i + 1) < plainText.size()) {
-                if (plainText[i] == plainText[i + 1]) {
+        for (int i = 0; i < text.size(); i += 2) {
+            formatedText.push_back(text[i]);
+            if ((i + 1) < text.size()) {
+                if (text[i] == text[i + 1]) {
                     formatedText.push_back(filler);
                     i--;
                 }
                 else {
-                    formatedText.push_back(plainText[i + 1]);
+                    formatedText.push_back(text[i + 1]);
                 }
             }
         }
         if (formatedText.size() % 2) {
             formatedText.push_back(filler);
         }
-        std::cout << "Formated Text: " << formatedText << std::endl;
         return formatedText;
     }
     
     void PopulateTable(const std::string& formatedKey) {
-        char usedChars[25] = { 
+        char usedChars[26] = { 
             'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 
-            'n', 'o', 'p', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z' 
+            'n', 'o', 'p', '\0', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z' 
         };
         for (unsigned int i = 0; i < formatedKey.size(); i++) {
             table[i / 5][i % 5] = formatedKey[i];
             uint8_t kOrd = static_cast<uint8_t>(formatedKey[i] - 'a');
-            if (kOrd > 'p') {
-                kOrd--;
-            }
             usedChars[kOrd] = '\0';
         } 
-        for (unsigned int i = formatedKey.size(); i < 25; i++) {
-            for (unsigned int j = 0; j < 25; j++) {
+        for (unsigned int i = formatedKey.size(); i < 26; i++) {
+            for (unsigned int j = 0; j < 26; j++) {
                 if (usedChars[j] != '\0') {
                     table[i / 5][i % 5] = usedChars[j];
                     usedChars[j] = '\0';
@@ -80,31 +89,22 @@ class PlayfairCipher : Cipher {
                 }
             }
         }
-        for (unsigned int i = 0; i < 5; i++) {
-            for (unsigned int j = 0; j < 5; j++) {
-                std::cout << table[i][j] << " ";
-            }
-            std::cout << std::endl;
-        }
     }
      
-    public:
-    std::string Encrypt(const std::string& key, const std::string& plainText) {
-        std::string cipherText;
-        std::string formatedKey = FormatKey(key);
-        std::string formatedText = FormatPlainText(plainText);
-        std::cout << "Formated textittt: " << formatedText << std::endl;
+    std::string Transform(const std::string& formatedKey, const std::string& formatedText, bool forward) {
+        int shiftDir = 1;
+        if (!forward) {
+            shiftDir *= -1;
+        }
         PopulateTable(formatedKey);
+        std::string transformedText;
         for (unsigned int i = 0; i < formatedText.size(); i += 2) {
-            unsigned int rowA = 0;
-            unsigned int colA = 0;
+            int rowA = 0;
+            int colA = 0;
             bool match = false;
             for (rowA = 0; rowA < 5; rowA++) {
                 for (colA = 0; colA < 5; colA++) {
-                    std::cout << "A " << rowA << colA << " : " << table[rowA][colA] << std::endl;
-                    std::cout << "text[i]: " << formatedText[i] << std::endl;
                     if (table[rowA][colA] == formatedText[i]) {
-                        std::cout << "Match found" << std::endl;
                         match = true;
                     }
                     if (match) {
@@ -115,8 +115,8 @@ class PlayfairCipher : Cipher {
                     break;
                 }
             }
-            unsigned int rowB = 0;
-            unsigned int colB = 0;
+            int rowB = 0;
+            int colB = 0;
             match = false;
             for (rowB = 0; rowB < 5; rowB++) {
                 for (colB = 0; colB < 5; colB++) {
@@ -131,35 +131,39 @@ class PlayfairCipher : Cipher {
                     break;
                 }
             }
-            std::cout << "A(" << rowA << ", " << colA << ")=" << table[rowA][colA] << std::endl;
-            std::cout << "B(" << rowB << ", " << colB << ")=" << table[rowB][colB] << std::endl;
             if (rowA == rowB) {
-                colA = (colA + 1) % 5;
-                colB = (colB + 1) % 5;
+                colA = (colA + shiftDir) % 5;
+                colB = (colB + shiftDir) % 5;
+                colA = (colA < 0 ? colA + 5 : colA);
+                colB = (colB < 0 ? colB + 5 : colB);
             } else if (colA == colB) {
-                rowA = (rowA + 1) % 5;
-                rowB = (rowB + 1) % 5;
+                rowA = (rowA + shiftDir) % 5;
+                rowB = (rowB + shiftDir) % 5;
+                rowA = (rowA < 0 ? rowA + 5 : rowA);
+                rowB = (rowB < 0 ? rowB + 5 : rowB);
             } else {
                 unsigned int tmp = colA;
                 colA = colB;
                 colB = tmp;
             }
-            std::cout << "A'(" << rowA << ", " << colA << ")=" << table[rowA][colA] << std::endl;
-            std::cout << "B'(" << rowB << ", " << colB << ")=" << table[rowB][colB] << std::endl;
-            cipherText.push_back(table[rowA][colA]);
-            cipherText.push_back(table[rowB][colB]);
+            transformedText.push_back(table[rowA][colA]);
+            transformedText.push_back(table[rowB][colB]);
         }
-        return cipherText;
+        return transformedText;
+ 
+    }
+    
+    public:
+    std::string Encrypt(const std::string& key, const std::string& plainText) {
+        std::string formatedKey = FormatKey(key);
+        std::string formatedText = FormatText(plainText);
+        return Transform(formatedKey, formatedText, true);
     };
 
     std::string Decrypt(const std::string& key, const std::string& cipherText) {
-        std::string plainText;
-        for (unsigned int i = 0; i < cipherText.size(); i++) {
-            uint8_t cOrd = static_cast<uint8_t>(cipherText[i] - 'a');
-            uint8_t kOrd = static_cast<uint8_t>(key[0] - 'a');
-            plainText.push_back(static_cast<char>((cOrd - kOrd) % 26) + 'a');
-        }
-        return plainText;
+        std::string formatedKey = FormatKey(key);
+        std::string formatedText = FormatText(cipherText);
+        return Transform(formatedKey, formatedText, false);
     };
     
     bool ValidateKey(const std::string& key, const std::string& text) {
