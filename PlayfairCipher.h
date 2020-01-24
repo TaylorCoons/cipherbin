@@ -170,6 +170,14 @@ class PlayfairCipher : Cipher {
         return true; 
     };
 
+    void KeyDesc() {
+        std::cout << "The key is a variable length set of characters in [a-z]" << std::endl;
+    }
+
+    void TextDesc() {
+        std::cout << "The text must be contained in the set [a-z]" << std::endl;
+    }
+
 };
 
 #endif

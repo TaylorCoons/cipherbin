@@ -49,8 +49,15 @@ class VigenereCipher : Cipher {
 
     bool ValidateKey(const std::string& key, const std::string& text) {
         return true;
-    }    
+    }
+    
+    void KeyDesc() {
+        std::cout << "The key is variable length set of characters in [a-z]" << std::endl;
+    }
 
+    void TextDesc() {
+        std::cout << "The text must be contained in the set [a-z]" << std::endl;
+    } 
 };
 
 

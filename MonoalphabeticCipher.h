@@ -49,7 +49,15 @@ class MonoalphabeticCipher : Cipher {
             return false;
         }
         return true;
+    }
+    
+    void KeyDesc() {
+        std::cout << "Key must be a set of 26 characters contained in [a-z]" << std::endl;
     }    
+
+    void TextDesc() {
+        std::cout << "The text must be contained in the set [a-z]" << std::endl;
+    }
 
 };
 

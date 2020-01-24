@@ -45,6 +45,14 @@ class CeaserCipher : Cipher {
         return true; 
     };
 
+    void KeyDesc() {
+        std::cout << "The key consists of one character from the set [a-z]" << std::endl;
+    }
+
+    void TextDesc() {
+        std::cout << "The text must be contained in the set [a-z]" << std::endl;
+    }
+
 };
 
 #endif

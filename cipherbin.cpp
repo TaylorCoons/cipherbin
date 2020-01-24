@@ -8,6 +8,7 @@
 #include "MonoalphabeticCipher.h"
 #include "PlayfairCipher.h"
 #include "VigenereCipher.h"
+#include "VernamCipher.h"
 
 // Validate list options
 bool ValidateList();
@@ -27,6 +28,7 @@ int main(int argc, char** argv) {
     // Instantiate options
     CLIParser::OPTIONS encryptOpts;
     CLIParser::OPTIONS decryptOpts;
+    CLIParser::OPTIONS descOpts;
     std::string cipherList[] = {
         "Caeser",
         "Monoalphabetic",
@@ -71,10 +73,17 @@ int main(int argc, char** argv) {
         CLIParser::ARG_TYPE::REQUIRED_ARG,
         CLIParser::OPT_TYPE::REQUIRED_OPT 
     };
+    descOpts["cipher"] = {
+        "--cipher",
+        "-c",
+        CLIParser::ARG_TYPE::REQUIRED_ARG,
+        CLIParser::OPT_TYPE::REQUIRED_OPT
+    };
     
     // Add the subparsers
     argparse.AddParser("encrypt", &encryptOpts);
     argparse.AddParser("decrypt", &decryptOpts);
+    argparse.AddParser("desc", &descOpts);
     argparse.AddParser("list", nullptr);
     // Parse the arguments
     std::string subParser = argparse.Parse(argc, argv);
@@ -115,6 +124,18 @@ int main(int argc, char** argv) {
         std::string plainText;
         plainText = cipher->Decrypt(decryptOpts["key"].result, decryptOpts["ciphertext"].result);
         std::cout << plainText << std::endl; 
+        if (cipher != nullptr) {
+            delete cipher;
+            cipher = nullptr;
+        }
+    } else if (subParser == "desc") {
+        if (!ValidateCipherOpt(descOpts, cipherList, numCiphers)) {
+            return 1;
+        }
+        Cipher* cipher = InstantiateCipher(descOpts["cipher"].result);
+        std::cout << descOpts["cipher"].result << ": " << std::endl;
+        cipher->TextDesc();
+        cipher->KeyDesc();
         if (cipher != nullptr) {
             delete cipher;
             cipher = nullptr;
@@ -162,5 +183,7 @@ Cipher* InstantiateCipher(const std::string& cipher) {
         return reinterpret_cast<Cipher*>(new PlayfairCipher);
     } else if (cipher == "Vigenere") {
         return reinterpret_cast<Cipher*>(new VigenereCipher);
+    } else if (cipher == "Vernam") {
+        return reinterpret_cast<Cipher*>(new VernamCipher);
     }
 }
