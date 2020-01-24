@@ -33,10 +33,14 @@ int main(int argc, char** argv) {
         "Caeser",
         "Monoalphabetic",
         "Playfair",
-        "Hill",
         "Vigenere",
         "Vernam"
     };
+    // TODO: Ciphers
+    // Hill
+    // Feistal
+    // DES Cipher
+
     unsigned int numCiphers = sizeof(cipherList) / sizeof(std::string);
     encryptOpts["key"] = {
         "--key", 
